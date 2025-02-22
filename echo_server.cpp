@@ -19,5 +19,10 @@ Then, the server loops back to wait for another client.
 */
 
 int main (int argc, char* argv[]){
-
+    //Ensures the program runs with exactly one command-line argument, the port number
+    if (argc != 2){
+        std::cerr << "Usage: " << argv[0] << " <port>" << std::endl;
+        return 1;
+    }
+    int port = std::atoi(argv[1]);
 }
