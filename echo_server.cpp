@@ -110,7 +110,7 @@ int main (int argc, char* argv[]){
         std::string cspMsg = recvLine(clientSocket);
         std::cout << "Received CSP: " << cspMsg << "\n";
 
-        std::vector<std::string> tokens = tokenize(cspMsg); //Expected Tokens: <Protocol Phase> <Measurement Type> <Message Size> <Probes> <Server Delay>
+        std::vector<std::string> tokens = tokenize(cspMsg); //Expected Tokens: "s" <Protocol Phase> <Measurement Type> <Message Size> <Probes> <Server Delay>
         if (tokens.size() != 5 || tokens[0] != "s") {
             std::string err = "404 ERROR: Invalid Connection Setup Message\n";
             send(clientSocket, err.c_str(), (int)err.size(), 0);
@@ -131,6 +131,40 @@ int main (int argc, char* argv[]){
         std::string ack = "200 OK: Ready\n";
         send(clientSocket, ack.c_str(), (int)ack.size(), 0);
 
+        //Measurement Phase (MP)
+        int expectedSeq = 1;
+        for (int i = 0; i < probes; i++) {
+            std::string mpMsg = recvLine(clientSocket);
+            std::cout << "Received MP: " << mpMsg << "\n";
+            std::vector<std::string> mpTokens = tokenize(mpMsg); //Expected Tokens: "m" <PAYLOAD> <PROBE SEQUENCE NUMBER>
+
+            if (mpTokens.size() < 3 || mpTokens[0] != "m") {
+                std::string err = "404 ERROR: Invalid Measurement Message\n";
+                send(clientSocket, err.c_str(), (int)err.size(), 0);
+                goto termination;
+            }
+
+            int seqNum = std::atoi(mpTokens.back().c_str());
+            if (seqNum != expectedSeq) {
+                std::string err = "404 ERROR: Invalid Measurement Message\n";
+                send(clientSocket, err.c_str(), (int)err.size(), 0);
+                goto termination;
+            }
+
+            //Checks payload length == msgSize
+            if (serverDelay > 0) {
+                Sleep(serverDelay);
+            };
+
+            //Echoes the Message
+            send(clientSocket, mpMsg.c_str(), (int)mpMsg.size(), 0);
+            expectedSeq++;
+        }
+
+    termination:
+        closesocket(clientSocket);
+        std::cout << "Connection Closed.\n";
+
         /*
         //Displays Client's IP Address & Port
         char clientIP[INET_ADDRSTRLEN];
@@ -146,6 +180,7 @@ int main (int argc, char* argv[]){
         }
         closesocket(clientSocket);
         */
+
     }
 
     closesocket(serverSocket);
