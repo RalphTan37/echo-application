@@ -85,7 +85,7 @@ int main (int argc, char* argv[]){
         char buffer[BUFFER_SIZE];
         int bytesReceived = recv(clientSocket, buffer, BUFFER_SIZE, 0);
         if (bytesReceived > 0) {
-            std::cout << "Recieved: " << std::string(buffer, bytesReceived) << std::endl;
+            std::cout << "Received: " << std::string(buffer, bytesReceived) << std::endl;
             send(clientSocket, buffer, bytesReceived, 0); //Echoes Message Back to the Client
         }
         closesocket(clientSocket);

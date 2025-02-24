@@ -67,7 +67,7 @@ int main (int argc, char* argv[]) {
     freeaddrinfo(serverInfo);
 
     std::cout << "Connected to " << hostname << " on port " << portStr << std::endl;
-    std::cout << "Enter a Message";
+    std::cout << "Enter a Message: ";
     std::string message;
     std::getline(std::cin, message);
 
