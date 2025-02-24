@@ -48,7 +48,7 @@ std::vector<std::string> tokenize(const std::string& s) {
 int main (int argc, char* argv[]){
     //Ensures the program runs with exactly one command-line argument, the port number
     if (argc != 2){
-        std::cerr << "Usage: " << argv[0] << " <port>" << std::endl;
+        std::cerr << "Usage: " << argv[0] << " <port>\n";
         return 1;
     }
     int port = std::atoi(argv[1]);
@@ -57,7 +57,7 @@ int main (int argc, char* argv[]){
     WSADATA wsaData;
     int result = WSAStartup(MAKEWORD(2,2), &wsaData);
     if (result != 0) {
-        std::cerr << "WSAStartup Failed: " << result << std::endl;
+        std::cerr << "WSAStartup Failed\n";
         return 1;
     }
 
@@ -78,7 +78,7 @@ int main (int argc, char* argv[]){
 
     //Binds the Socket to the Port
     if (bind(serverSocket, (sockaddr*)&serverAddr, sizeof(serverAddr)) == SOCKET_ERROR) {
-        std::cerr << "Bind Failed: " << WSAGetLastError() << std::endl;
+        std::cerr << "Bind Failed: " << WSAGetLastError() << "\n";
         closesocket(serverSocket);
         WSACleanup();
         return 1;
@@ -86,13 +86,13 @@ int main (int argc, char* argv[]){
 
     //Listens for Incoming Connections
     if (listen(serverSocket, SOMAXCONN) == SOCKET_ERROR) {
-        std::cerr << "Listen Failed: " << WSAGetLastError() << std::endl;
+        std::cerr << "Listen Failed: " << WSAGetLastError() << "\n";
         closesocket(serverSocket);
         WSACleanup();
         return 1;
     }
 
-    std::cout << "Echo Server listenting on Port " << port << std::endl;
+    std::cout << "Echo Server listening on Port " << port << "\n";
 
     //Accept & Handle Client Connections
     while (true) {
@@ -100,10 +100,38 @@ int main (int argc, char* argv[]){
         int clientAddrSize = sizeof(clientAddr);
         SOCKET clientSocket = accept(serverSocket, (sockaddr*)&clientAddr, &clientAddrSize);
         if (clientSocket == INVALID_SOCKET) {
-            std::cerr << "Accept Failed: " << WSAGetLastError() << std::endl;
+            std::cerr << "Accept Failed: " << WSAGetLastError() << "\n";
+            continue;
+        }
+        std::cout << "Client Connected.\n";
+
+
+        //Connection Setup Phase (CSP)
+        std::string cspMsg = recvLine(clientSocket);
+        std::cout << "Received CSP: " << cspMsg << "\n";
+
+        std::vector<std::string> tokens = tokenize(cspMsg); //Expected Tokens: <Protocol Phase> <Measurement Type> <Message Size> <Probes> <Server Delay>
+        if (tokens.size() != 5 || tokens[0] != "s") {
+            std::string err = "404 ERROR: Invalid Connection Setup Message\n";
+            send(clientSocket, err.c_str(), (int)err.size(), 0);
+            closesocket(clientSocket);
             continue;
         }
 
+        //Initializes Tokens
+        std::string mType = tokens[1];
+        int msgSize = std::atoi(tokens[2].c_str());
+        int probes = std::atoi(tokens[3].c_str());
+        int serverDelay = std::atoi(tokens[4].c_str());
+
+        //Logs the Connection Values
+        std::cout << "M-TYPE:" << mType << ", MSG SIZE: " << msgSize << ", PROBES: " << probes << ", SERVER DELAY: " << serverDelay << "\n";
+
+        //Sends Acknowledgment
+        std::string ack = "200 OK: Ready\n";
+        send(clientSocket, ack.c_str(), (int)ack.size(), 0);
+
+        /*
         //Displays Client's IP Address & Port
         char clientIP[INET_ADDRSTRLEN];
         inet_ntop(AF_INET, &clientAddr.sin_addr, clientIP, INET_ADDRSTRLEN);
@@ -117,6 +145,7 @@ int main (int argc, char* argv[]){
             send(clientSocket, buffer, bytesReceived, 0); //Echoes Message Back to the Client
         }
         closesocket(clientSocket);
+        */
     }
 
     closesocket(serverSocket);
