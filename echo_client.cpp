@@ -52,25 +52,31 @@ std::string createPayload(int len) {
 
 int main (int argc, char* argv[]) {
     //Ensures the program runs with exactly two arguments, the host name and port number
-    if (argc != 3) {
-        std::cerr << "Usage: " << argv[0] << " <hostname> <port>" << std::endl;
+    if (argc != 6) {
+        std::cerr << "Usage: " << argv[0] << " <hostname> <port> <m-type> <msg size> <probes>\n";
         return 1;
     }
+
+    //Initializes Arguments
     const char* hostname = argv[1];
     const char* portStr = argv[2];
+    std::string mType = argv[3]; // "rtt" or "tput"
+    int msgSize = std::atoi(argv[4]);
+    int probes = std::atoi(argv[5]);
+    int serverDelay = 0;
 
     //Initializes Winsock
     WSADATA wsaData;
     int result = WSAStartup(MAKEWORD(2,2), &wsaData);
     if (result != 0) {
-        std::cerr << "WSAStartup Failed: " << result << std::endl;
+        std::cerr << "WSAStartup Failed\n";
         return 1;
     }
     
     //Creates a TCP Socket
     SOCKET sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     if (sock == INVALID_SOCKET) {
-        std::cerr << "Error at socket(): " << WSAGetLastError() << std::endl;
+        std::cerr << "Error at socket(): " << WSAGetLastError() << "\n";
         WSACleanup();
         return 1;
     }
