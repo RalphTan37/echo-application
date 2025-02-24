@@ -161,25 +161,22 @@ int main (int argc, char* argv[]){
             expectedSeq++;
         }
 
+        //Connection Termination Phase (CTP)
+        {
+            std::string ctpMsg = recvLine(clientSocket);
+            std::cout << "Received CTP: " << ctpMsg << "\n";
+            if (ctpMsg != "t") {
+                std::string err = "404 ERROR: Invalid Connection Termination Message\n";
+                send(clientSocket, err.c_str(), (int)err.size(), 0);
+            } else {
+                std::string closeMsg = "200 OK: Closing Connection\n";
+                send(clientSocket, closeMsg.c_str(), (int)closeMsg.size(), 0);
+            }
+        }
+
     termination:
         closesocket(clientSocket);
         std::cout << "Connection Closed.\n";
-
-        /*
-        //Displays Client's IP Address & Port
-        char clientIP[INET_ADDRSTRLEN];
-        inet_ntop(AF_INET, &clientAddr.sin_addr, clientIP, INET_ADDRSTRLEN);
-        std::cout << "Connection From " << clientIP << ":" << ntohs(clientAddr.sin_port) << std::endl;
-
-        //Receives Data from Client
-        char buffer[BUFFER_SIZE];
-        int bytesReceived = recv(clientSocket, buffer, BUFFER_SIZE, 0);
-        if (bytesReceived > 0) {
-            std::cout << "Received: " << std::string(buffer, bytesReceived) << std::endl;
-            send(clientSocket, buffer, bytesReceived, 0); //Echoes Message Back to the Client
-        }
-        closesocket(clientSocket);
-        */
 
     }
 
