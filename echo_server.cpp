@@ -1,7 +1,6 @@
 #include <iostream>
 #include <cstdlib>
 #include <cstring>
-#include <unistd.h>
 
 //Winsock API for Windows
 #include <winsock2.h>
@@ -51,6 +50,14 @@ int main (int argc, char* argv[]){
 
     //Binds the Socket to the Port
     if (bind(serverSocket, (sockaddr*)&serverAddr, sizeof(serverAddr)) == SOCKET_ERROR) {
+        std::cerr << "Bind Failed: " << WSAGetLastError() << std::endl;
+        closesocket(serverSocket);
+        WSACleanup();
+        return 1;
+    }
+
+    //Listens for Incoming Connections
+    if (listen(serverSocket, SOMAXCONN) == SOCKET_ERROR) {
         std::cerr << "Listen Failed: " << WSAGetLastError() << std::endl;
         closesocket(serverSocket);
         WSACleanup();

@@ -1,7 +1,6 @@
 #include <iostream>
 #include <cstdlib>
 #include <cstring>
-#include <unistd.h>
 
 //Winsock API for Windows
 #include <winsock2.h>
@@ -10,6 +9,13 @@
 #define BUFFER_SIZE 1024
 
 #pragma comment(lib, "Ws2_32.lib") //Add Ws2_#2.lib during the linking process
+
+/*
+The client accepts a host anme and a port number as command line arguments.
+It creates a TCP socket, resolves the hostname, and connects to the server.
+Then, the client prompts the user to enter a message to the server.
+The message is sent to the server, it waits for the echod message, prints it, and exits.
+*/
 
 int main (int argc, char* argv[]) {
     //Ensures the program runs with exactly two arguments, the host name and port number
