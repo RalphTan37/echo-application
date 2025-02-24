@@ -6,7 +6,10 @@
 #include <winsock2.h>
 #include <ws2tcpip.h>
 
-#define BUFFER_SIZE 1024
+#include <sstream>
+#include <vector>
+
+#define BUFFER_SIZE 4096
 
 #pragma comment(lib, "Ws2_32.lib") //Add Ws2_#2.lib during the linking process
 
@@ -16,6 +19,36 @@ It creates a TCP socket, resolves the hostname, and connects to the server.
 Then, the client prompts the user to enter a message to the server.
 The message is sent to the server, it waits for the echod message, prints it, and exits.
 */
+
+//Reads a line from a socket, up to '\n'
+std::string recvLine(SOCKET sock) {
+    std::string line;
+    char c;
+    int ret;
+    while ((ret = recv(sock, &c, 1, 0)) > 0) {
+        if (c == '\n') {
+            break;
+        }
+        line.push_back(c);
+    }
+    return line;
+}
+
+//Tokenizes a string by whitespace
+std::vector<std::string> tokenize(const std::string& s) {
+    std::istringstream iss(s);
+    std::vector<std::string> tokens;
+    std::string token;
+    while (iss >> token) {
+        tokens.push_back(token);
+    }
+    return tokens;
+}
+
+//Creates a payload string of the specified length
+std::string createPayload(int len) {
+    return std::string(len, 'X');
+}
 
 int main (int argc, char* argv[]) {
     //Ensures the program runs with exactly two arguments, the host name and port number
