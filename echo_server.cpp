@@ -6,7 +6,10 @@
 #include <winsock2.h>
 #include <ws2tcpip.h>
 
-#define BUFFER_SIZE 1024
+#include <sstream>
+#include <vector>
+
+#define BUFFER_SIZE 4096
 
 #pragma comment(lib, "Ws2_32.lib") //Add Ws2_#2.lib during the linking process
 
@@ -16,6 +19,31 @@ It creates a TCP socket, binds to the provided port on all network interfaces, a
 When a client connects, it reads the message and returns the same message back, and closes the connection.
 Then, the server loops back to wait for another client.
 */
+
+//Reads a line from a socket, up to '\n'
+std::string recvLine(SOCKET sock) {
+    std::string line;
+    char c;
+    int ret;
+    while ((ret = recv(sock, &c, 1, 0)) > 0) {
+        if (c == '\n') {
+            break;
+        }
+        line.push_back(c);
+    }
+    return line;
+}
+
+//Tokenizes a string by whitespace
+std::vector<std::string> tokenize(const std::string& s) {
+    std::istringstream iss(s);
+    std::vector<std::string> tokens;
+    std::string token;
+    while (iss >> token) {
+        tokens.push_back(token);
+    }
+    return tokens;
+}
 
 int main (int argc, char* argv[]){
     //Ensures the program runs with exactly one command-line argument, the port number
