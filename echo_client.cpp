@@ -123,6 +123,20 @@ int main (int argc, char* argv[]) {
         return 1;
     }
 
+    //Measurement Phase (MP)
+    std::string payload = createPayload(msgSize);
+    for (int seq =  1; seq <= probes; seq++) {
+        std::ostringstream mpStream; //Expected Tokens: m <PAYLOAD> <SEQUENCE>\n
+        mpStream << "m " << payload << " " << seq << "\n";
+        std::string mpMsg = mpStream.str();
+        send(sock, mpMsg.c_str(), (int)mpMsg.size(), 0);
+        std::cout << "Sent MP Probe " << seq << "\n";
+
+        //Receives Echo
+        std::string echoMsg = recvLine(sock);
+        std::cout << "Received Echo: " << echoMsg << "\n";
+    }
+
     closesocket(sock);
     WSACleanup();
     return 0;
