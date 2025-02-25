@@ -108,7 +108,7 @@ int main (int argc, char* argv[]) {
     
     //Connection Setup Phase (CSP)
     std::ostringstream cspStream;
-    cspStream << "s" << mType << " " << msgSize << " " << probes << " " << serverDelay << "\n"; //Expected Tokens: s <m-type> <msg size> <probes> <server delay>\n
+    cspStream << "s " << mType << " " << msgSize << " " << probes << " " << serverDelay << "\n"; //Expected Tokens: s <m-type> <msg size> <probes> <server delay>\n
     std::string cspMsg = cspStream.str();
     send(sock, cspMsg.c_str(), (int)cspMsg.size(), 0);
     std::cout << "Sent CSP: " << cspMsg;
@@ -138,7 +138,7 @@ int main (int argc, char* argv[]) {
     }
 
     //Connection Termination Phase (CTP)
-    std::string termMsg = "t/n";
+    std::string termMsg = "t\n";
     send(sock, termMsg.c_str(), (int)termMsg.size(), 0);
     std::cout << "Sent Termination Message.\n";
     std::string termAck = recvLine(sock);
