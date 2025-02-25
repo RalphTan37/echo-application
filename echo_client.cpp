@@ -15,11 +15,11 @@
 #pragma comment(lib, "Ws2_32.lib") //Add Ws2_#2.lib during the linking process
 
 /*
-The client accepts a host anme and a port number as command line arguments.
+The client accepts a host name, port number, measurement type, message size, and number of probes as command-line arguments.
 It creates a TCP socket, resolves the hostname, and connects to the server.
-Then, the client prompts the user to enter a message to the server.
-The message is sent to the server, it waits for the echod message, prints it, and exits.
+It then follows the protocol to measure RTT or throughput by automatically sending and receiving messages without additional user input.
 */
+
 
 //Reads a line from a socket, up to '\n'
 std::string recvLine(SOCKET sock) {
@@ -52,13 +52,13 @@ std::string createPayload(int len) {
 }
 
 int main (int argc, char* argv[]) {
-    //Ensures the program runs with exactly two arguments, the host name and port number
+    // Usage: echo_client.exe <hostname> <port> <m-type> <msg size> <probes>
     if (argc != 6) {
         std::cerr << "Usage: " << argv[0] << " <hostname> <port> <m-type> <msg size> <probes>\n";
         return 1;
     }
 
-    //Initializes Arguments
+    // Parse arguments
     const char* hostname = argv[1];
     const char* portStr = argv[2];
     std::string mType = argv[3]; // "rtt" or "tput"
@@ -109,7 +109,7 @@ int main (int argc, char* argv[]) {
     
     //Connection Setup Phase (CSP)
     std::ostringstream cspStream;
-    cspStream << "s " << mType << " " << msgSize << " " << probes << " " << serverDelay << "\n"; //Expected Tokens: s <m-type> <msg size> <probes> <server delay>\n
+    cspStream << "s " << mType << " " << msgSize << " " << probes << " " << serverDelay << "\n";
     std::string cspMsg = cspStream.str();
     send(sock, cspMsg.c_str(), (int)cspMsg.size(), 0);
     std::cout << "Sent CSP: " << cspMsg;
@@ -127,25 +127,23 @@ int main (int argc, char* argv[]) {
     //Measurement Phase (MP)
     std::string payload = createPayload(msgSize);
     for (int seq =  1; seq <= probes; seq++) {
-        std::ostringstream mpStream; //Expected Tokens: m <PAYLOAD> <SEQUENCE>\n
+        std::ostringstream mpStream; // Expected format: "m <PAYLOAD> <SEQUENCE>\n"
         mpStream << "m " << payload << " " << seq << "\n";
         std::string mpMsg = mpStream.str();
 
         //Records time before sending message
         auto start = std::chrono::high_resolution_clock::now();
-
         send(sock, mpMsg.c_str(), (int)mpMsg.size(), 0);
         std::cout << "Sent MP Probe " << seq << "\n";
 
         //Receives Echo
         std::string echoMsg = recvLine(sock);
-
-        //Records time after sending message
         auto end = std::chrono::high_resolution_clock::now();
 
-        //Computes RTT in Microseconds
+        // Calculate RTT in microseconds
         auto rtt = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
-        std::cout << "Probe " << seq << " RTT: " << rtt << " microseconds\n";
+        std::cout << "Received Echo: " << echoMsg << "\n";
+        std::cout << "Probe " << seq << " RTT: " << rtt << " microseconds\n";    
     }
 
     //Connection Termination Phase (CTP)

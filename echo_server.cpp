@@ -5,6 +5,7 @@
 //Winsock API for Windows
 #include <winsock2.h>
 #include <ws2tcpip.h>
+#include <windows.h>
 
 #include <sstream>
 #include <vector>
@@ -110,7 +111,7 @@ int main (int argc, char* argv[]){
         std::string cspMsg = recvLine(clientSocket);
         std::cout << "Received CSP: " << cspMsg << "\n";
 
-        std::vector<std::string> tokens = tokenize(cspMsg); //Expected Tokens: "s" <Protocol Phase> <Measurement Type> <Message Size> <Probes> <Server Delay>
+        std::vector<std::string> tokens = tokenize(cspMsg); // Expected Tokens: "s" <m-type> <msg size> <probes> <server delay>
         if (tokens.size() != 5 || tokens[0] != "s") {
             std::string err = "404 ERROR: Invalid Connection Setup Message\n";
             send(clientSocket, err.c_str(), (int)err.size(), 0);
@@ -118,7 +119,7 @@ int main (int argc, char* argv[]){
             continue;
         }
 
-        //Initializes Tokens
+        // Extract tokens
         std::string mType = tokens[1];
         int msgSize = std::atoi(tokens[2].c_str());
         int probes = std::atoi(tokens[3].c_str());
@@ -136,7 +137,7 @@ int main (int argc, char* argv[]){
         for (int i = 0; i < probes; i++) {
             std::string mpMsg = recvLine(clientSocket);
             std::cout << "Received MP: " << mpMsg << "\n";
-            std::vector<std::string> mpTokens = tokenize(mpMsg); //Expected Tokens: "m" <PAYLOAD> <PROBE SEQUENCE NUMBER>
+            std::vector<std::string> mpTokens = tokenize(mpMsg); // Expected Tokens: "m" <PAYLOAD> <PROBE SEQUENCE NUMBER>
 
             if (mpTokens.size() < 3 || mpTokens[0] != "m") {
                 std::string err = "404 ERROR: Invalid Measurement Message\n";
@@ -157,7 +158,8 @@ int main (int argc, char* argv[]){
             };
 
             //Echoes the Message
-            send(clientSocket, mpMsg.c_str(), (int)mpMsg.size(), 0);
+            std::string response = mpMsg + "\n";
+            send(clientSocket, response.c_str(), (int)response.size(), 0);
             expectedSeq++;
         }
 
