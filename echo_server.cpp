@@ -125,7 +125,7 @@ int main (int argc, char* argv[]){
         int serverDelay = std::atoi(tokens[4].c_str());
 
         //Logs the Connection Values
-        std::cout << "M-TYPE:" << mType << ", MSG SIZE: " << msgSize << ", PROBES: " << probes << ", SERVER DELAY: " << serverDelay << "\n";
+        std::cout << "M-TYPE: " << mType << ", MSG SIZE: " << msgSize << ", PROBES: " << probes << ", SERVER DELAY: " << serverDelay << "\n";
 
         //Sends Acknowledgment
         std::string ack = "200 OK: Ready\n";

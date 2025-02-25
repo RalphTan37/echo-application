@@ -8,6 +8,7 @@
 
 #include <sstream>
 #include <vector>
+#include <chrono>
 
 #define BUFFER_SIZE 4096
 
@@ -129,12 +130,22 @@ int main (int argc, char* argv[]) {
         std::ostringstream mpStream; //Expected Tokens: m <PAYLOAD> <SEQUENCE>\n
         mpStream << "m " << payload << " " << seq << "\n";
         std::string mpMsg = mpStream.str();
+
+        //Records time before sending message
+        auto start = std::chrono::high_resolution_clock::now();
+
         send(sock, mpMsg.c_str(), (int)mpMsg.size(), 0);
         std::cout << "Sent MP Probe " << seq << "\n";
 
         //Receives Echo
         std::string echoMsg = recvLine(sock);
-        std::cout << "Received Echo: " << echoMsg << "\n";
+
+        //Records time after sending message
+        auto end = std::chrono::high_resolution_clock::now();
+
+        //Computes RTT in Microseconds
+        auto rtt = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
+        std::cout << "Probe " << seq << " RTT: " << rtt << " microseconds\n";
     }
 
     //Connection Termination Phase (CTP)
