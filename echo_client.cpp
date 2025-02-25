@@ -20,7 +20,6 @@ It creates a TCP socket, resolves the hostname, and connects to the server.
 It then follows the protocol to measure RTT or throughput by automatically sending and receiving messages without additional user input.
 */
 
-
 //Reads a line from a socket, up to '\n'
 std::string recvLine(SOCKET sock) {
     std::string line;
@@ -126,6 +125,10 @@ int main (int argc, char* argv[]) {
 
     //Measurement Phase (MP)
     std::string payload = createPayload(msgSize);
+
+    //For throughput measurements, accumulate throughput values
+    double totalThroughput = 0.0;
+
     for (int seq =  1; seq <= probes; seq++) {
         std::ostringstream mpStream; // Expected format: "m <PAYLOAD> <SEQUENCE>\n"
         mpStream << "m " << payload << " " << seq << "\n";
@@ -140,10 +143,24 @@ int main (int argc, char* argv[]) {
         std::string echoMsg = recvLine(sock);
         auto end = std::chrono::high_resolution_clock::now();
 
-        // Calculate RTT in microseconds
-        auto rtt = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
-        std::cout << "Received Echo: " << echoMsg << "\n";
-        std::cout << "Probe " << seq << " RTT: " << rtt << " microseconds\n";    
+        double elapsedSeconds = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() / 1e6;
+        
+        if (mType == "rtt") { //RTT Measurement
+            auto rtt = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
+            std::cout << "Received Echo: " << echoMsg << "\n";
+            std::cout << "Probe " << seq << " RTT: " << rtt << " microseconds\n";
+        }
+        else if (mType == "tput") { //Throughput Measurement
+            double throughput_bps = (msgSize * 8.0) / elapsedSeconds;
+            std::cout << "Received Echo: " << echoMsg << "\n";
+            std::cout << "Probe " << seq << " Throughput: " << throughput_bps << " bps\n";
+            totalThroughput += throughput_bps;
+        }
+    }
+
+    if (mType == "tput") {
+        double avgThroughput = totalThroughput / probes;
+        std::cout << "Average Throughput for " << msgSize << " bytes: " << avgThroughput << " bps\n";
     }
 
     //Connection Termination Phase (CTP)
