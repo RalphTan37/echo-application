@@ -17,6 +17,6 @@ g++ echo_client.cpp -o echo_client.exe -lws2_32
 
 **Run the Client:**
 ```
-.\echo_client.exe localhost (port number)
+.\echo_client.exe localhost (port number) (measurement type) (message size) (number of probes)
 
 ```
