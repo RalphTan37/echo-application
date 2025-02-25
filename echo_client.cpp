@@ -137,6 +137,13 @@ int main (int argc, char* argv[]) {
         std::cout << "Received Echo: " << echoMsg << "\n";
     }
 
+    //Connection Termination Phase (CTP)
+    std::string termMsg = "t/n";
+    send(sock, termMsg.c_str(), (int)termMsg.size(), 0);
+    std::cout << "Sent Termination Message.\n";
+    std::string termAck = recvLine(sock);
+    std::cout << "Received Termination Acknowledgment: " << termAck << "\n";
+
     closesocket(sock);
     WSACleanup();
     return 0;
