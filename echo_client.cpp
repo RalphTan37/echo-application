@@ -89,7 +89,7 @@ int main (int argc, char* argv[]) {
     hints.ai_protocol = IPPROTO_TCP;
     result = getaddrinfo(hostname, portStr, &hints, &serverInfo);
     if (result != 0) {
-        std::cerr << "getaddrinfo Failed: " << result << std::endl;
+        std::cerr << "getaddrinfo Failed\n";
         closesocket(sock);
         WSACleanup();
         return 1;
@@ -97,34 +97,30 @@ int main (int argc, char* argv[]) {
 
     //Connects to the Server
     if (connect(sock, serverInfo -> ai_addr, (int)serverInfo -> ai_addrlen) == SOCKET_ERROR) {
-        std::cerr << "Connect Failed: " << WSAGetLastError() << std::endl;
+        std::cerr << "Connect Failed: " << WSAGetLastError() << "\n";
         freeaddrinfo(serverInfo);
         closesocket(sock);
         WSACleanup();
         return 1;
     }
     freeaddrinfo(serverInfo);
+    std::cout << "Connected to " << hostname << " on port " << portStr << "\n";
+    
+    //Connection Setup Phase (CSP)
+    std::ostringstream cspStream;
+    cspStream << "s" << mType << " " << msgSize << " " << probes << " " << serverDelay << "\n"; //Expected Tokens: s <m-type> <msg size> <probes> <server delay>\n
+    std::string cspMsg = cspStream.str();
+    send(sock, cspMsg.c_str(), (int)cspMsg.size(), 0);
+    std::cout << "Sent CSP: " << cspMsg;
 
-    std::cout << "Connected to " << hostname << " on port " << portStr << std::endl;
-    std::cout << "Enter a Message: ";
-    std::string message;
-    std::getline(std::cin, message);
-
-    //Sends Message to Server
-    int sentBytes = send (sock, message.c_str(), (int)message.size(), 0);
-    if (sentBytes == SOCKET_ERROR) {
-        std::cerr << "Send Failed: " << WSAGetLastError() << std::endl;
+    //Waits for Server Acknowledgment
+    std::string ack = recvLine(sock);
+    std::cout << "Received From Server: " << ack << "\n";
+    if (ack.find("200 OK") == std::string::npos) {
+        std::cerr << "Server did not acknowledge setup. Terminating.\n";
         closesocket(sock);
         WSACleanup();
         return 1;
-    }
-
-    //Receives Echoed Message from Server
-    char buffer[BUFFER_SIZE];
-    int receivedBytes = recv(sock, buffer, BUFFER_SIZE - 1, 0);
-    if (receivedBytes > 0) {
-        buffer[receivedBytes] = '\0'; //Null Terminate Received Data
-        std::cout << "Echo from Server: " << buffer << std::endl;
     }
 
     closesocket(sock);
